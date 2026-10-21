@@ -1,0 +1,260 @@
+{
+  "status": "statistical_specification_for_reproduction",
+  "protocol_version": "1.1",
+  "date_local": "2026-10-17",
+  "timezone": "Asia/Kuala_Lumpur",
+  "primary_design": "five_reporting_district_outcomes_with_fixed_city_ERA5_weather",
+  "primary_tables_built": true,
+  "district_to_weather_city": {
+    "CHERAS": "Kuala Lumpur",
+    "KEPONG": "Kuala Lumpur",
+    "LEMBAH PANTAI": "Kuala Lumpur",
+    "TITIWANGSA": "Kuala Lumpur",
+    "WP PUTRAJAYA": "Putrajaya"
+  },
+  "target": "target_notifications",
+  "target_definition": "raw extract record count by Tarikh Notifikasi and recorded Daerah",
+  "horizon_weeks": 1,
+  "origin": "target Monday 00:00 after completion of the preceding Sunday",
+  "availability_assumption": "retrospective finalised past weeks; historical real-time availability unverified",
+  "primary_refit": "once on eligible 2020 targets; no refit in 2021",
+  "train_week_starts": [
+    "2020-03-02",
+    "2020-12-21"
+  ],
+  "test_week_starts": [
+    "2021-01-04",
+    "2021-12-20"
+  ],
+  "excluded_target_week_starts": [
+    "2020-12-28"
+  ],
+  "bridge_week_retained_for_history": true,
+  "expected_district_rows": {
+    "matched": 475,
+    "train": 215,
+    "test": 255,
+    "bridge": 5
+  },
+  "expected_city_rows": {
+    "matched": 190,
+    "train": 86,
+    "test": 102,
+    "bridge": 2
+  },
+  "test_weeks_by_quarter": [
+    13,
+    13,
+    13,
+    12
+  ],
+  "test_weeks_by_half_year": [
+    26,
+    25
+  ],
+  "folds": [
+    {
+      "fit_start": "2020-03-02",
+      "fit_end": "2020-07-06",
+      "validation_start": "2020-07-13",
+      "validation_end": "2020-08-31"
+    },
+    {
+      "fit_start": "2020-03-02",
+      "fit_end": "2020-08-31",
+      "validation_start": "2020-09-07",
+      "validation_end": "2020-10-26"
+    },
+    {
+      "fit_start": "2020-03-02",
+      "fit_end": "2020-10-26",
+      "validation_start": "2020-11-02",
+      "validation_end": "2020-12-21"
+    }
+  ],
+  "baseline_features": [
+    "tb_count_lag1",
+    "tb_count_lag2",
+    "tb_count_lag4",
+    "tb_count_lag8",
+    "tb_count_prev4w_mean",
+    "annual_sin",
+    "annual_cos",
+    "week_index",
+    "covid_stringency_prevweek"
+  ],
+  "core_weather_additions": [
+    "era5_temp_mean_c_prev4w",
+    "era5_rh_mean_pct_prev4w",
+    "era5_rain_total_mm_prev4w"
+  ],
+  "expanded_weather_additions": [
+    "era5_wind_mean_ms_prev4w",
+    "era5_solar_total_mjm2_prev4w",
+    "era5_temp_range_c_prev4w"
+  ],
+  "identity_encoding": {
+    "type": "one_hot",
+    "reference_district": "CHERAS",
+    "indicators": 4
+  },
+  "primary_weather_window_days": 28,
+  "weather_mean_fields": [
+    "temp_mean_c",
+    "rh_mean_pct",
+    "wind_mean_ms",
+    "temp_range_c"
+  ],
+  "weather_sum_fields": [
+    "rain_total_mm",
+    "solar_total_mjm2"
+  ],
+  "numeric_imputation": "none; stop and investigate missing values",
+  "nb_numeric_scaling": "mean and population SD fitted on each fitting partition; zero SD becomes 1",
+  "shared_setting_selection": "one configuration per family minimizing equal-set equal-fold mean macro-MAE across B/C/E and the three 2020 folds",
+  "xgboost": {
+    "objective": "count:poisson",
+    "learning_rate": 0.03,
+    "grid": {
+      "max_depth": [
+        1,
+        2
+      ],
+      "n_estimators": [
+        50,
+        100,
+        200
+      ],
+      "reg_lambda": [
+        1,
+        10
+      ]
+    },
+    "min_child_weight": 10,
+    "reg_alpha": 0,
+    "gamma": 0,
+    "max_delta_step": 0.7,
+    "subsample": 1,
+    "colsample_bytree": 1,
+    "early_stopping": false,
+    "device": "cpu",
+    "seed": 20261016,
+    "tie_margin_MAE": 0.01,
+    "tie_order": [
+      "lower_depth",
+      "fewer_trees",
+      "higher_reg_lambda"
+    ],
+    "n_jobs": 1,
+    "tree_method": "hist"
+  },
+  "negative_binomial": {
+    "parameterization": "NB2 variance = mu + dispersion * mu^2",
+    "link": "log",
+    "grid": {
+      "ridge_lambda": [
+        0.1,
+        1,
+        10
+      ],
+      "dispersion": [
+        0.1,
+        0.5,
+        1,
+        2
+      ]
+    },
+    "penalty": "mean_negative_loglikelihood + ridge_lambda/2 * sum_squared_numeric_coefficients",
+    "penalize_intercept_or_identity": false,
+    "L1_wt": 0,
+    "refit": false,
+    "maxiter": 2000,
+    "tolerance": 1e-08,
+    "tie_margin_MAE": 0.01,
+    "tie_order": [
+      "higher_ridge_lambda",
+      "dispersion_closest_to_0.5"
+    ]
+  },
+  "benchmarks": [
+    "previous_week_count",
+    "previous_four_week_mean"
+  ],
+  "diagnostic": "always_zero_Putrajaya",
+  "metrics": {
+    "primary": "MAE",
+    "secondary": "RMSE",
+    "diagnostic": "mean_signed_error",
+    "aggregations": [
+      "pooled",
+      "equal_district_macro",
+      "per_district",
+      "quarter",
+      "half_year"
+    ]
+  },
+  "primary_algorithm_comparisons": [
+    "core_boosting_vs_core_NB",
+    "core_boosting_vs_previous_week"
+  ],
+  "primary_weather_contrast": "core_boosting_vs_baseline_boosting",
+  "secondary_weather_contrast": "expanded_boosting_vs_core_boosting",
+  "weather_gain_sign": "comparator_error_minus_new_error; positive_is_improvement",
+  "percentage_gain": "100*(comparator_MAE-new_MAE)/comparator_MAE; undefined_if_zero_denominator",
+  "uncertainty": {
+    "method": "paired_moving_block_bootstrap_of_weeks",
+    "all_districts_and_models_together": true,
+    "block_weeks": 4,
+    "sensitivity_block_weeks": 8,
+    "draws": 2000,
+    "interval": "percentile_95",
+    "seed": 20261016,
+    "refit_inside_bootstrap": false
+  },
+  "SHAP": {
+    "models": [
+      "core_boosting",
+      "expanded_boosting"
+    ],
+    "background": "all_215_training_rows_only",
+    "feature_perturbation": "interventional",
+    "model_output": "raw_log_expected_count_margin",
+    "check_additivity": true,
+    "groups": [
+      "district",
+      "quarter_by_target_Monday",
+      "half_year"
+    ],
+    "quarter_stability_block_weeks": 2,
+    "descriptive_top2_stability_threshold": 0.75
+  },
+  "sensitivity_window_days": [
+    14,
+    56
+  ],
+  "refit_sensitivity_origins": [
+    "2021-04-05",
+    "2021-07-05",
+    "2021-10-04"
+  ],
+  "existing_patient_footprints": "exploratory_only_locked_primary_settings_no_2020_static_footprint_validation",
+  "location_quality_subset": "linkage_audit_only_no_population_forecast",
+  "prohibited": [
+    "random_row_split",
+    "2021_tuning",
+    "target_week_weather",
+    "treatment_outcome_predictors",
+    "future_patient_footprint_information",
+    "patient_data_external_transfer",
+    "new_geocoding_or_paid_calls",
+    "reading_geocoding_apikey.rtf"
+  ],
+  "preparation_only": true,
+  "model_execution_enabled": false,
+  "run_control": {
+    "study_training_started": false,
+    "test_scoring_started": false,
+    "source_version_change_requires_audit": true,
+    "default_command": "run_preflight.py_only"
+  }
+}

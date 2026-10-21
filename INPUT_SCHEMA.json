@@ -1,0 +1,112 @@
+{
+  "contains_data_values": false,
+  "district_weekly": {
+    "path": "climate/district_grid_2019_2021/district_weekly_tb_weather.csv",
+    "unique_key": [
+      "district",
+      "week_start"
+    ],
+    "required_columns": [
+      "district",
+      "week_start",
+      "week_end",
+      "full_study_week",
+      "target_notifications",
+      "target_notifications_excl_revised"
+    ]
+  },
+  "city_weekly": {
+    "path": "climate/kl_putrajaya_2019_2021/weekly_tb_weather_2020_2021.csv",
+    "required_columns": [
+      "week_start",
+      "week_end"
+    ],
+    "role": "loaded version reference; city counts rebuilt from district outcomes"
+  },
+  "city_daily": {
+    "path": "climate/kl_putrajaya_2019_2021/daily_weather_all_sources.csv",
+    "unique_key": [
+      "city",
+      "date"
+    ],
+    "required_columns": [
+      "city",
+      "date",
+      "era5_temp_mean_c",
+      "era5_rh_mean_pct",
+      "era5_rain_total_mm",
+      "era5_wind_mean_ms",
+      "era5_solar_total_mjm2",
+      "era5_temp_range_c",
+      "nasa_temp_mean_c",
+      "nasa_rh_mean_pct",
+      "nasa_rain_total_mm",
+      "nasa_wind_mean_ms",
+      "nasa_solar_total_mjm2",
+      "nasa_temp_range_c",
+      "era5land_temp_mean_c",
+      "era5land_rh_mean_pct",
+      "era5land_temp_range_c"
+    ]
+  },
+  "policy": {
+    "path": "climate/kl_putrajaya_2019_2021/malaysia_covid_stringency_2020_2021.csv",
+    "unique_key": [
+      "date"
+    ],
+    "required_columns": [
+      "date",
+      "covid_stringency_index"
+    ]
+  },
+  "footprint_daily": {
+    "path": "climate/district_grid_2019_2021/district_weather_proxies_daily.csv",
+    "unique_key": [
+      "district",
+      "date"
+    ],
+    "required_columns": [
+      "district",
+      "date",
+      "temp_mean_c",
+      "rh_mean_pct",
+      "rain_total_mm",
+      "wind_mean_ms",
+      "solar_total_mjm2",
+      "temp_range_c"
+    ]
+  },
+  "footprint_weights": {
+    "path": "climate/district_grid_2019_2021/district_proxy_grid_weights.csv",
+    "unique_key": [
+      "district",
+      "source",
+      "grid_id"
+    ],
+    "required_columns": [
+      "district",
+      "source",
+      "grid_id",
+      "weight",
+      "reference_year"
+    ]
+  },
+  "weather_units": {
+    "temp_mean_c": "degrees Celsius",
+    "rh_mean_pct": "percent",
+    "rain_total_mm": "millimetres per day",
+    "wind_mean_ms": "metres per second",
+    "solar_total_mjm2": "megajoules per square metre per day",
+    "temp_range_c": "degrees Celsius"
+  },
+  "geographical_labels": [
+    "CHERAS",
+    "KEPONG",
+    "LEMBAH PANTAI",
+    "TITIWANGSA",
+    "WP PUTRAJAYA"
+  ],
+  "date_format": "YYYY-MM-DD",
+  "count_type": "non-negative integer extract records",
+  "scope": "schema only; no study observations, identifiers or coordinates"
+}

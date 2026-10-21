@@ -1,0 +1,17 @@
+# Only reviewed experiment source and reproducibility definitions may be tracked.
+# Keep datasets, results, models, credentials and local environments outside Git.
+/*
+!/.gitignore
+!/DATA_DEFINITION.md
+!/INPUT_SCHEMA.json
+!/README.md
+!/audit_run.py
+!/config.json
+!/requirements.in
+!/requirements.lock
+!/run_study.py
+!/run_synthetic_checks.py
+!/CODE_MANIFEST.json
+!/study/
+/study/*
+!/study/*.py

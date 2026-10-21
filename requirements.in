@@ -1,0 +1,9 @@
+# Bounded setup specification. requirements.lock records the resolved local environment.
+numpy>=2.0,<2.4
+pandas>=2.2,<3
+scipy>=1.14,<2
+scikit-learn>=1.5,<2
+statsmodels>=0.14,<0.16
+xgboost>=3.0,<4
+shap>=0.48,<0.51
+matplotlib>=3.9,<4
