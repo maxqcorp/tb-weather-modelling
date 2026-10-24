@@ -1,4 +1,4 @@
-"""Primary fitting, frozen-origin prediction and registered sensitivity runs."""
+"""Primary fitting, frozen-origin prediction and prespecified sensitivity runs."""
 from __future__ import annotations
 
 import copy
@@ -73,7 +73,7 @@ def run_sensitivities(store,config,primary_settings,primary_models,out):
         ('S08',{'omit_policy':True},('boosting',),('B','C'),False),
         ('S10',{'source':'footprint'},('boosting',),('B','C','E'),False)]
     for run_id,changes,families,sets,retune in specifications:
-        progress(f'{run_id}: preparing registered sensitivity {changes}')
+        progress(f'{run_id}: preparing prespecified sensitivity {changes}')
         directory=out/run_id
         data,units=build_dataset(store,**changes)
         test=data.loc[data.partition.eq('test')]
