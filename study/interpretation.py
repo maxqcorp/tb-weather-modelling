@@ -4,38 +4,31 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import shap
-import xgboost as xgb
 from scipy.stats import rankdata,spearmanr
 from .data import CORE,WEATHER
 from .evaluation import block_indices
 
 
 def tree_contributions(pipeline,background,frame,force_mode=None):
+    if force_mode not in (None,'interventional'):
+        raise ValueError('This study requires interventional Tree SHAP')
     xtrain=pipeline.transform(background);x=pipeline.transform(frame)
     model=pipeline.model
     raw=model.predict(x,output_margin=True)
-    fallback=None
-    if force_mode!='tree_path_dependent_native':
-        try:
-            masker=shap.maskers.Independent(xtrain,max_samples=len(xtrain))
-            explainer=shap.TreeExplainer(model,data=masker,feature_perturbation='interventional',model_output='raw')
-            assert len(explainer.data)==len(background),'SHAP silently reduced background rows'
-            phi=explainer.shap_values(x,check_additivity=True)
-            base=np.full(len(x),float(explainer.expected_value))
-            if not np.allclose(base+np.sum(phi,axis=1),raw,atol=1e-5,rtol=1e-5):raise ArithmeticError('Interventional additivity failed')
-            mode='interventional'
-        except (ValueError,AssertionError,ArithmeticError,TypeError,NotImplementedError) as exc:
-            fallback={'exception_type':type(exc).__name__,'reason':str(exc)}
-            mode='tree_path_dependent_native'
-    else:mode='tree_path_dependent_native'
-    if mode=='tree_path_dependent_native':
-        values=model.get_booster().predict(xgb.DMatrix(x),pred_contribs=True)
-        phi,base=values[:,:-1],values[:,-1]
+    try:
+        masker=shap.maskers.Independent(xtrain,max_samples=len(xtrain))
+        explainer=shap.TreeExplainer(model,data=masker,feature_perturbation='interventional',model_output='raw')
+        assert len(explainer.data)==len(background),'SHAP reduced the required background rows'
+        phi=explainer.shap_values(x,check_additivity=True)
+        base=np.full(len(x),float(explainer.expected_value))
+        if not np.allclose(base+np.sum(phi,axis=1),raw,atol=1e-5,rtol=1e-5):
+            raise ArithmeticError('Interventional additivity failed')
+    except (ValueError,AssertionError,ArithmeticError,TypeError,NotImplementedError) as exc:
+        raise RuntimeError('Interventional Tree SHAP is required; the explanation stage stopped without using another method') from exc
     error=float(np.max(np.abs(base+np.sum(phi,axis=1)-raw)))
-    if not np.allclose(base+np.sum(phi,axis=1),raw,atol=1e-5,rtol=1e-5):raise ArithmeticError('Raw-margin additivity failed')
-    return np.asarray(phi),np.asarray(base),{'mode':mode,'output_scale':'log_expected_count_margin',
-        'background_rows':len(background) if mode=='interventional' else None,
-        'max_additivity_error':error,'fallback':fallback}
+    return np.asarray(phi),np.asarray(base),{'mode':'interventional','output_scale':'log_expected_count_margin',
+        'background_rows':len(background),'max_additivity_error':error,'fallback':None}
+
 
 
 def explain(pipeline,training,test,config,mode):

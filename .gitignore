@@ -5,6 +5,8 @@
 !/DATA_DEFINITION.md
 !/INPUT_SCHEMA.json
 !/README.md
+!/SOURCE_PREPARATION.md
+!/generate_manuscript_figures.py
 !/audit_run.py
 !/config.json
 !/requirements.in

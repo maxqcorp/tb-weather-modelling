@@ -57,6 +57,17 @@ def run_checks(config):
     phi,base,meta=tree_contributions(boost,f,f.iloc[:10])
     assert np.isfinite(phi).all() and boost.predict(f).min()>=0
     results.append({'check':'Poisson_boosting_and_SHAP_raw_margin','passed':True,**meta})
+    assert meta['mode']=='interventional' and meta['background_rows']==len(f) and meta['fallback'] is None
+    with patch('study.interpretation.shap.TreeExplainer',side_effect=ValueError('Intentional synthetic interventional failure')):
+        try:tree_contributions(boost,f,f.iloc[:10],force_mode='interventional')
+        except RuntimeError as exc:
+            assert isinstance(exc.__cause__,ValueError)
+        else:raise AssertionError('Interventional SHAP failure did not stop explanation')
+    try:tree_contributions(boost,f,f.iloc[:10],force_mode='tree_path_dependent_native')
+    except ValueError:pass
+    else:raise AssertionError('A different SHAP method was accepted')
+    results.append({'check':'interventional_SHAP_required_and_failure_stops_without_fallback','passed':True})
+
 
     weeks=pd.date_range('2020-01-06',periods=65,freq='W-MON')
     panel=pd.DataFrame({'unit':'unit','week_start':weeks,'week_end':weeks+pd.Timedelta(days=6),
